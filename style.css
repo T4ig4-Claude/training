@@ -1,0 +1,204 @@
+/* ===== Farben (dunkles Design) ===== */
+:root {
+  --bg: #0f1115;
+  --card: #1a1e26;
+  --card2: #242a35;
+  --border: #303744;
+  --text: #eef0f3;
+  --muted: #98a2b0;
+  --accent: #ff8a3d;
+  --accent-press: #e5762c;
+  --blue: #5ab4ff;
+  --green: #4cd08a;
+  --red: #ff6464;
+  --radius: 16px;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 17px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body { padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
+
+main { max-width: 560px; margin: 0 auto; padding: 0 16px 48px; }
+
+[hidden] { display: none !important; }
+
+a { color: inherit; text-decoration: none; }
+button, input, select, label { font: inherit; color: inherit; }
+button, a, label { touch-action: manipulation; cursor: pointer; }
+
+/* ===== Kopfzeile ===== */
+.topbar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 0 12px;
+  position: sticky; top: 0; z-index: 5;
+  background: var(--bg);
+}
+.topbar h1 {
+  flex: 1; margin: 0; font-size: 1.5rem;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.icon-btn {
+  width: 48px; height: 48px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border: none; border-radius: 12px;
+  background: var(--card); font-size: 1.6rem; line-height: 1;
+}
+.icon-btn:active { background: var(--card2); }
+
+/* ===== Karten & Texte ===== */
+.card { background: var(--card); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; }
+.card h3 { margin: 0 0 12px; font-size: 1.05rem; }
+.label { font-size: .85rem; color: var(--muted); margin-bottom: 4px; }
+.muted { color: var(--muted); }
+.hint { color: var(--muted); font-size: .85rem; margin: 6px 0 10px; }
+.big { font-size: 1.15rem; font-weight: 650; }
+
+/* ===== Fortschrittsbalken ===== */
+.goal { display: block; }
+.goal-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 10px; font-weight: 600; }
+.goal-head strong { color: var(--accent); font-size: 1.35rem; }
+.progress { height: 14px; background: var(--card2); border-radius: 999px; overflow: hidden; }
+.progress-fill {
+  height: 100%; min-width: 6px; border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), #ffbd7a);
+  transition: width .4s;
+}
+.goal-sub { margin-top: 8px; font-size: .9rem; }
+
+/* ===== Körpergewicht-Button ===== */
+.bw-btn {
+  display: flex; flex-direction: column; justify-content: center; gap: 3px;
+  min-height: 76px; padding: 14px 16px; margin-bottom: 14px;
+  background: var(--card); border-radius: var(--radius);
+  border-left: 5px solid var(--green);
+}
+.bw-btn:active { background: var(--card2); }
+.bw-title { font-weight: 650; font-size: 1.1rem; }
+.bw-sub { color: var(--muted); font-size: .9rem; }
+.bw-sub.todo { color: var(--accent); }
+
+/* ===== Übungs-Raster ===== */
+.section-head { display: flex; justify-content: space-between; align-items: center; margin: 20px 0 10px; }
+.section-head h2 { margin: 0; font-size: 1.2rem; }
+.text-btn { background: none; border: none; color: var(--accent); font-weight: 650; padding: 10px 4px; }
+
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ex-btn {
+  display: flex; flex-direction: column; justify-content: center; gap: 5px;
+  width: 100%; min-height: 96px; padding: 14px;
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  text-align: left;
+}
+.ex-btn:active { background: var(--card2); }
+.ex-name { font-weight: 650; font-size: 1.02rem; line-height: 1.2; overflow-wrap: break-word; hyphens: auto; }
+.ex-sub { font-size: .8rem; color: var(--muted); }
+.ex-btn.editing { border: 1px dashed var(--red); }
+.ex-btn.editing .ex-sub { color: var(--red); }
+
+.add-form { display: flex; gap: 8px; margin-top: 12px; }
+.add-form input { flex: 1; min-width: 0; }
+
+/* ===== Eingabefelder ===== */
+input[type=text], input[type=date], input[type=time], select {
+  width: 100%; min-height: 52px; padding: 12px;
+  background: var(--card2); border: 1px solid var(--border); border-radius: 12px;
+}
+input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0; }
+
+.field-label { display: block; font-size: .9rem; color: var(--muted); margin: 8px 0 6px; }
+
+.stepper { display: grid; grid-template-columns: 76px 1fr 76px; gap: 8px; margin-bottom: 6px; }
+.step-btn {
+  height: 68px; border: none; border-radius: 14px;
+  background: var(--card2); font-size: 2.1rem; font-weight: 500; line-height: 1;
+}
+.step-btn:active { background: var(--border); }
+input.step-input {
+  height: 68px; width: 100%; min-width: 0;
+  text-align: center; font-size: 2rem; font-weight: 700;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 14px;
+}
+
+/* ===== Buttons ===== */
+.btn {
+  display: inline-block; min-height: 52px; padding: 14px 18px;
+  border: none; border-radius: 14px;
+  background: var(--card2); font-weight: 650; text-align: center;
+}
+.btn:active { background: var(--border); }
+.btn.primary { background: var(--accent); color: #1c0f05; }
+.btn.primary:active { background: var(--accent-press); }
+.btn.huge { width: 100%; min-height: 70px; margin-top: 16px; font-size: 1.25rem; }
+.btn.block { display: block; width: 100%; margin-top: 8px; }
+.btn.danger { background: transparent; border: 1px solid var(--red); color: var(--red); }
+
+/* ===== Sätze als "Chips" ===== */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  min-height: 40px; padding: 8px 12px;
+  border: 1px solid var(--border); border-radius: 999px;
+  background: var(--card2); font-size: .95rem;
+}
+.chip:active { border-color: var(--red); }
+.today { margin-top: 16px; }
+.history-day { padding: 10px 0; border-top: 1px solid var(--border); }
+.history-day:first-child { border-top: none; padding-top: 0; }
+
+/* ===== Diagramme ===== */
+.chart { display: block; width: 100%; height: 230px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; font-size: .82rem; color: var(--muted); }
+.legend span::before {
+  content: ''; display: inline-block; vertical-align: middle;
+  width: 16px; height: 3px; margin-right: 6px; border-radius: 2px;
+  background: var(--c);
+}
+.legend .dashed::before { background: repeating-linear-gradient(90deg, var(--c) 0 4px, transparent 4px 7px); }
+.legend .dot::before { width: 8px; height: 8px; border-radius: 50%; }
+
+/* ===== Statistik-Kacheln ===== */
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.stat { background: var(--card2); border-radius: 12px; padding: 12px; }
+.stat-value { font-size: 1.3rem; font-weight: 700; }
+.stat-label { font-size: .8rem; color: var(--muted); margin-top: 2px; }
+.status { margin: 12px 0 0; font-size: .92rem; }
+.good { color: var(--green); }
+.warn { color: var(--accent); }
+
+/* ===== Listen ===== */
+.list-row {
+  display: flex; justify-content: space-between; align-items: center;
+  min-height: 52px; border-top: 1px solid var(--border);
+}
+.list-row:first-child { border-top: none; }
+.del-btn { width: 44px; height: 44px; border: none; border-radius: 10px; background: none; color: var(--muted); font-size: 1.1rem; }
+.del-btn:active { color: var(--red); background: var(--card2); }
+
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: end; }
+
+.backup-hint {
+  display: block; margin-top: 18px; padding: 12px 14px;
+  border: 1px dashed var(--border); border-radius: 12px;
+  color: var(--muted); font-size: .9rem;
+}
+.version { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 20px; }
+
+/* ===== Kurze Meldung unten ===== */
+.toast {
+  position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); z-index: 50;
+  transform: translate(-50%, 30px); opacity: 0; pointer-events: none;
+  max-width: calc(100% - 32px); padding: 14px 20px;
+  background: #2f3644; border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,.45);
+  font-weight: 600; text-align: center;
+  transition: opacity .25s, transform .25s;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }

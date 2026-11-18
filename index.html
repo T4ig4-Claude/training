@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f1115">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Training">
+  <title>Trainings-Tracker</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+
+  <!-- ============ STARTBILDSCHIRM ============ -->
+  <section id="view-home" class="view" hidden>
+    <header class="topbar">
+      <h1>Training</h1>
+      <a class="icon-btn" href="#/einstellungen" aria-label="Einstellungen und Backup">⚙</a>
+    </header>
+
+    <!-- Fortschrittsbalken Bankdrücken (wird von app.js gefüllt) -->
+    <div id="bench-card" class="card"></div>
+
+    <!-- Körpergewicht-Button (wird von app.js gefüllt) -->
+    <a id="bw-button" class="bw-btn" href="#/gewicht"></a>
+
+    <div class="section-head">
+      <h2>Übungen</h2>
+      <button id="edit-toggle" class="text-btn" data-action="toggle-edit">Bearbeiten</button>
+    </div>
+
+    <!-- Übungs-Buttons (werden von app.js erzeugt) -->
+    <div id="exercise-grid" class="grid"></div>
+
+    <form id="add-exercise-form" class="card add-form" hidden>
+      <input id="new-exercise-name" type="text" placeholder="Neue Übung, z. B. Kniebeugen" maxlength="40" autocomplete="off">
+      <button type="submit" class="btn primary">Hinzufügen</button>
+    </form>
+
+    <div id="backup-hint"></div>
+  </section>
+
+
+  <!-- ============ ÜBUNG: SATZ EINTRAGEN ============ -->
+  <section id="view-exercise" class="view" hidden>
+    <header class="topbar">
+      <button class="icon-btn" data-action="back" aria-label="Zurück">‹</button>
+      <h1 id="ex-title"></h1>
+    </header>
+
+    <div id="ex-last" class="card"></div>
+
+    <div class="card">
+      <label class="field-label" for="ex-weight">Gewicht (kg)</label>
+      <div class="stepper">
+        <button type="button" class="step-btn" data-action="step" data-target="ex-weight" data-step="-2.5" aria-label="2,5 kg weniger">−</button>
+        <input id="ex-weight" class="step-input" type="text" inputmode="decimal" autocomplete="off"
+               data-min="0" data-decimals="2" data-min-decimals="0">
+        <button type="button" class="step-btn" data-action="step" data-target="ex-weight" data-step="2.5" aria-label="2,5 kg mehr">+</button>
+      </div>
+
+      <label class="field-label" for="ex-reps">Wiederholungen</label>
+      <div class="stepper">
+        <button type="button" class="step-btn" data-action="step" data-target="ex-reps" data-step="-1" aria-label="eine Wiederholung weniger">−</button>
+        <input id="ex-reps" class="step-input" type="text" inputmode="numeric" autocomplete="off"
+               data-min="1" data-decimals="0" data-min-decimals="0">
+        <button type="button" class="step-btn" data-action="step" data-target="ex-reps" data-step="1" aria-label="eine Wiederholung mehr">+</button>
+      </div>
+
+      <button class="btn primary huge" data-action="save-set">Satz speichern</button>
+
+      <div id="ex-today" class="today"></div>
+    </div>
+
+    <div class="card">
+      <h3>Verlauf</h3>
+      <canvas id="ex-chart" class="chart"></canvas>
+      <div id="ex-legend" class="legend"></div>
+    </div>
+
+    <div class="card">
+      <h3>Alle Trainings</h3>
+      <p class="hint">Einen Satz antippen, um ihn zu löschen.</p>
+      <div id="ex-history"></div>
+    </div>
+  </section>
+
+
+  <!-- ============ KÖRPERGEWICHT ============ -->
+  <section id="view-bodyweight" class="view" hidden>
+    <header class="topbar">
+      <button class="icon-btn" data-action="back" aria-label="Zurück">‹</button>
+      <h1>Körpergewicht</h1>
+    </header>
+
+    <div class="card">
+      <label class="field-label" for="bw-input">Gewicht (kg)</label>
+      <div class="stepper">
+        <button type="button" class="step-btn" data-action="step" data-target="bw-input" data-step="-0.1" aria-label="0,1 kg weniger">−</button>
+        <input id="bw-input" class="step-input" type="text" inputmode="decimal" autocomplete="off"
+               data-min="20" data-decimals="1" data-min-decimals="1">
+        <button type="button" class="step-btn" data-action="step" data-target="bw-input" data-step="0.1" aria-label="0,1 kg mehr">+</button>
+      </div>
+
+      <label class="field-label" for="bw-date">Datum</label>
+      <input id="bw-date" type="date">
+
+      <button class="btn primary huge" data-action="save-bodyweight">Gewicht speichern</button>
+      <p id="bw-note" class="hint"></p>
+    </div>
+
+    <div class="card">
+      <h3>Entwicklung</h3>
+      <div id="bw-stats"></div>
+    </div>
+
+    <div class="card">
+      <h3>Verlauf</h3>
+      <canvas id="bw-chart" class="chart"></canvas>
+      <div class="legend">
+        <span class="dot" style="--c: var(--muted)">Einzelwerte</span>
+        <span style="--c: var(--green)">7-Tage-Durchschnitt</span>
+        <span class="dashed" style="--c: var(--accent)">Ziel-Tempo</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Erinnerung zum Wiegen</h3>
+      <p class="hint">Trägt einen täglichen Termin mit Erinnerung in den Kalender deines Handys ein.</p>
+      <label class="field-label" for="bw-reminder-time">Uhrzeit</label>
+      <input id="bw-reminder-time" type="time" value="07:00">
+      <button class="btn block" data-action="reminder">In Kalender eintragen</button>
+    </div>
+
+    <div class="card">
+      <h3>Alle Einträge</h3>
+      <div id="bw-history"></div>
+    </div>
+  </section>
+
+
+  <!-- ============ EINSTELLUNGEN & BACKUP ============ -->
+  <section id="view-settings" class="view" hidden>
+    <header class="topbar">
+      <button class="icon-btn" data-action="back" aria-label="Zurück">‹</button>
+      <h1>Einstellungen</h1>
+    </header>
+
+    <div class="card">
+      <h3>Ziel Bankdrücken</h3>
+      <div class="row2">
+        <div>
+          <label class="field-label" for="set-bench-start">Start (kg)</label>
+          <input id="set-bench-start" type="text" inputmode="decimal" data-setting="benchStart">
+        </div>
+        <div>
+          <label class="field-label" for="set-bench-goal">Ziel (kg)</label>
+          <input id="set-bench-goal" type="text" inputmode="decimal" data-setting="benchGoal">
+        </div>
+      </div>
+      <label class="field-label" for="set-bench-measure">Fortschritt messen an</label>
+      <select id="set-bench-measure" data-setting="benchMeasure">
+        <option value="heaviest">Schwerster Satz (echtes Gewicht)</option>
+        <option value="e1rm">Geschätztes 1RM (Epley-Formel)</option>
+      </select>
+    </div>
+
+    <div class="card">
+      <h3>Ziel Körpergewicht</h3>
+      <div class="row2">
+        <div>
+          <label class="field-label" for="set-bw-target">Zielgewicht (kg)</label>
+          <input id="set-bw-target" type="text" inputmode="decimal" data-setting="targetBodyweight">
+        </div>
+        <div>
+          <label class="field-label" for="set-bw-rate">kg pro Monat</label>
+          <input id="set-bw-rate" type="text" inputmode="decimal" data-setting="monthlyGain">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Backup</h3>
+      <p class="hint">Deine Daten liegen nur auf diesem Gerät. Mach ab und zu ein Backup und speichere die Datei z. B. in Google Drive.</p>
+      <button class="btn block" data-action="export-json">Backup exportieren (JSON)</button>
+      <button class="btn block" data-action="export-csv">Tabelle exportieren (CSV für Excel)</button>
+      <label class="btn block" for="import-file">Backup importieren (JSON)</label>
+      <input id="import-file" type="file" accept=".json,application/json" hidden>
+      <p id="backup-info" class="hint"></p>
+    </div>
+
+    <div class="card">
+      <h3>Alles zurücksetzen</h3>
+      <p class="hint">Löscht alle Sätze, Übungen und Gewichtseinträge auf diesem Gerät.</p>
+      <button class="btn block danger" data-action="reset-all">Alle Daten löschen</button>
+    </div>
+
+    <p class="version">Trainings-Tracker · Version 1.0</p>
+  </section>
+
+</main>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
