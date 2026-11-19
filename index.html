@@ -31,19 +31,31 @@
     <a id="bw-button" class="bw-btn" href="#/gewicht"></a>
 
     <div class="section-head">
-      <h2>Übungen</h2>
-      <button id="edit-toggle" class="text-btn" data-action="toggle-edit">Bearbeiten</button>
+      <h2>Muskelgruppen</h2>
     </div>
+
+    <!-- Kacheln für Brust, Rücken, ... (werden von app.js erzeugt) -->
+    <div id="category-grid" class="grid"></div>
+
+    <div id="backup-hint"></div>
+  </section>
+
+
+  <!-- ============ MUSKELGRUPPE: ÜBUNGEN AUSWÄHLEN ============ -->
+  <section id="view-category" class="view" hidden>
+    <header class="topbar">
+      <button class="icon-btn" data-action="back" aria-label="Zurück">‹</button>
+      <h1 id="cat-title"></h1>
+      <button id="edit-toggle" class="text-btn" data-action="toggle-edit">Bearbeiten</button>
+    </header>
 
     <!-- Übungs-Buttons (werden von app.js erzeugt) -->
     <div id="exercise-grid" class="grid"></div>
 
     <form id="add-exercise-form" class="card add-form" hidden>
-      <input id="new-exercise-name" type="text" placeholder="Neue Übung, z. B. Kniebeugen" maxlength="40" autocomplete="off">
+      <input id="new-exercise-name" type="text" placeholder="Neue Übung" maxlength="40" autocomplete="off">
       <button type="submit" class="btn primary">Hinzufügen</button>
     </form>
-
-    <div id="backup-hint"></div>
   </section>
 
 
@@ -201,7 +213,7 @@
       <button class="btn block danger" data-action="reset-all">Alle Daten löschen</button>
     </div>
 
-    <p class="version">Trainings-Tracker · Version 1.0</p>
+    <p class="version">Trainings-Tracker · Version 1.1</p>
   </section>
 
 </main>

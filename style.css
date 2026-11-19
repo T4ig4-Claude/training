@@ -102,6 +102,14 @@ button, a, label { touch-action: manipulation; cursor: pointer; }
 .ex-btn:active { background: var(--card2); }
 .ex-name { font-weight: 650; font-size: 1.02rem; line-height: 1.2; overflow-wrap: break-word; hyphens: auto; }
 .ex-sub { font-size: .8rem; color: var(--muted); }
+.cat-btn { min-height: 108px; border-left: 4px solid var(--accent); }
+.cat-name { font-weight: 700; font-size: 1.2rem; margin-bottom: 2px; }
+.ex-sub.faint { opacity: .6; }
+.grid-wide { grid-column: 1 / -1; }
+/* Übungen innerhalb einer Muskelgruppe: eine Spalte, breite Buttons */
+#exercise-grid { grid-template-columns: 1fr; }
+#exercise-grid .ex-btn { min-height: 80px; }
+#exercise-grid .ex-name { font-size: 1.12rem; }
 .ex-btn.editing { border: 1px dashed var(--red); }
 .ex-btn.editing .ex-sub { color: var(--red); }
 

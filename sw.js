@@ -8,7 +8,7 @@
      beim übernächsten Öffnen der App.
 */
 
-const CACHE = 'trainings-tracker-v1';
+const CACHE = 'trainings-tracker-v2';
 
 const FILES = [
   './',

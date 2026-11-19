@@ -10,9 +10,34 @@ const STORAGE_KEY = 'trainings-tracker';
 const BENCH_ID = 'bankdruecken';            // feste ID für Bankdrücken (für den Fortschrittsbalken)
 const DAYS_PER_MONTH = 30.44;
 
+// Muskelgruppen auf dem Startbildschirm (in dieser Reihenfolge)
+const CATEGORIES = [
+  { id: 'brust',    name: 'Brust' },
+  { id: 'ruecken',  name: 'Rücken' },
+  { id: 'schulter', name: 'Schulter' },
+  { id: 'beine',    name: 'Beine' },
+  { id: 'bizeps',   name: 'Bizeps' },
+  { id: 'trizeps',  name: 'Trizeps' }
+];
+// Für Übungen ohne passende Kategorie (wird nur angezeigt, wenn es welche gibt)
+const OTHER_CATEGORY = { id: 'sonstige', name: 'Sonstige' };
+
+// Übungen, die beim ersten Start angelegt werden
 const DEFAULT_EXERCISES = [
-  'Bankdrücken', 'Enges Bankdrücken', 'Schulterdrücken', 'Rudern', 'Klimmzüge/Latzug',
-  'Dips', 'Trizepsdrücken', 'Überkopf-Trizepsstrecken', 'Bizeps-Curls', 'Hammer-Curls'
+  { category: 'brust',    name: 'Bankdrücken LH', id: BENCH_ID },
+  { category: 'brust',    name: 'KH Schrägbankdrücken' },
+  { category: 'ruecken',  name: 'Rudern' },
+  { category: 'ruecken',  name: 'Klimmzüge/Latzug' },
+  { category: 'ruecken',  name: 'Kreuzheben' },
+  { category: 'schulter', name: 'Schulterdrücken KH' },
+  { category: 'schulter', name: 'Seitheben' },
+  { category: 'beine',    name: 'Kniebeugen' },
+  { category: 'beine',    name: 'Ausfallschritte' },
+  { category: 'beine',    name: 'Beinstrecker' },
+  { category: 'bizeps',   name: 'Bizeps-Curls' },
+  { category: 'bizeps',   name: 'Hammer-Curls' },
+  { category: 'trizeps',  name: 'Trizepsdrücken Kabel' },
+  { category: 'trizeps',  name: 'French Press' }
 ];
 
 const DEFAULT_SETTINGS = {
@@ -33,6 +58,7 @@ const COLORS = {
 let data = loadData();
 let editMode = false;          // Übungen bearbeiten (löschen/hinzufügen)
 let currentExerciseId = null;  // welche Übung ist gerade offen
+let currentCategoryId = null;  // welche Muskelgruppe ist gerade offen
 let redrawChart = null;        // Funktion zum Neuzeichnen des sichtbaren Diagramms
 let navigatedInApp = false;    // für den Zurück-Button
 
@@ -56,26 +82,75 @@ function loadData() {
 function normalizeData(d) {
   d = (d && typeof d === 'object') ? d : {};
 
-  const exercises = Array.isArray(d.exercises)
-    ? d.exercises.filter(e => e && typeof e.id === 'string' && typeof e.name === 'string')
-    : DEFAULT_EXERCISES.map((name, i) => ({ id: i === 0 ? BENCH_ID : makeId(), name }));
-
   const sets = Array.isArray(d.sets)
     ? d.sets.filter(s => s && typeof s.exId === 'string' && isFinite(s.time) && isFinite(s.weight) && isFinite(s.reps))
     : [];
   sets.forEach(s => { if (!s.id) s.id = makeId(); });
+
+  let exercises = Array.isArray(d.exercises)
+    ? d.exercises.filter(e => e && typeof e.id === 'string' && typeof e.name === 'string')
+    : DEFAULT_EXERCISES.map(e => ({ id: e.id || makeId(), name: e.name, category: e.category }));
+
+  // Daten aus Version 1 (noch ohne Kategorien) umsortieren
+  if (Array.isArray(d.exercises) && !(d.version >= 2)) exercises = migrateToCategories(exercises, sets);
+
+  const validCategories = CATEGORIES.map(c => c.id);
+  exercises.forEach(e => { if (!validCategories.includes(e.category)) e.category = OTHER_CATEGORY.id; });
 
   const bodyweights = Array.isArray(d.bodyweights)
     ? d.bodyweights.filter(b => b && /^\d{4}-\d{2}-\d{2}$/.test(b.day) && isFinite(b.kg))
     : [];
 
   return {
+    version: 2,
     exercises,
     sets,
     bodyweights,
     settings: Object.assign({}, DEFAULT_SETTINGS, d.settings),
     lastExport: d.lastExport || null
   };
+}
+
+// Version 1 hatte noch keine Muskelgruppen. Alte Übungen werden hier einsortiert,
+// alte Standard-Übungen ohne Einträge fliegen raus, neue Standard-Übungen kommen dazu.
+// Eingetragene Sätze bleiben immer erhalten.
+function migrateToCategories(exercises, sets) {
+  const OLD = {   // alter Name: [Kategorie, neuer Name]
+    'Bankdrücken': ['brust', 'Bankdrücken LH'],
+    'Enges Bankdrücken': ['brust'],
+    'Schulterdrücken': ['schulter', 'Schulterdrücken KH'],
+    'Rudern': ['ruecken'],
+    'Klimmzüge/Latzug': ['ruecken'],
+    'Dips': ['trizeps'],
+    'Trizepsdrücken': ['trizeps', 'Trizepsdrücken Kabel'],
+    'Überkopf-Trizepsstrecken': ['trizeps'],
+    'Bizeps-Curls': ['bizeps'],
+    'Hammer-Curls': ['bizeps']
+  };
+  const used = new Set(sets.map(s => s.exId));
+  const findDefault = name => DEFAULT_EXERCISES.find(x => x.name.toLowerCase() === name.toLowerCase());
+
+  const kept = exercises.filter(e => {
+    const old = OLD[e.name];
+    if (!old || used.has(e.id)) return true;
+    return Boolean(findDefault(old[1] || e.name));   // nur behalten, wenn es sie noch als Standard gibt
+  });
+
+  kept.forEach(e => {
+    const old = OLD[e.name];
+    if (old) { e.category = old[0]; e.name = old[1] || e.name; }
+    const def = findDefault(e.name);
+    if (def) e.category = def.category;
+  });
+
+  for (const def of DEFAULT_EXERCISES) {
+    const exists = kept.some(e => e.name.toLowerCase() === def.name.toLowerCase() || (def.id && e.id === def.id));
+    if (!exists) kept.push({ id: def.id || makeId(), name: def.name, category: def.category });
+  }
+
+  // Reihenfolge wie in der Standardliste, eigene Übungen dahinter
+  const order = e => { const i = DEFAULT_EXERCISES.findIndex(x => x.name === e.name); return i < 0 ? 999 : i; };
+  return kept.sort((a, b) => order(a) - order(b));
 }
 
 function saveData() {
@@ -222,6 +297,7 @@ const setText = s => fmt(s.weight) + ' kg × ' + s.reps;
    NAVIGATION ZWISCHEN DEN SEITEN
    Die Adresse hinter dem # bestimmt, was angezeigt wird:
    #/                -> Startbildschirm
+   #/kategorie/<id>  -> Übungen einer Muskelgruppe
    #/uebung/<id>     -> Übung
    #/gewicht         -> Körpergewicht
    #/einstellungen   -> Einstellungen & Backup
@@ -235,6 +311,9 @@ function route() {
   if (hash.startsWith('#/uebung/')) {
     const id = decodeURIComponent(hash.slice('#/uebung/'.length));
     if (getExercise(id)) return showExercise(id);
+  } else if (hash.startsWith('#/kategorie/')) {
+    const id = decodeURIComponent(hash.slice('#/kategorie/'.length));
+    if (getCategory(id)) return showCategory(id);
   } else if (hash === '#/gewicht') {
     return showBodyweight();
   } else if (hash === '#/einstellungen') {
@@ -249,8 +328,10 @@ function showView(name) {
 }
 
 function goBack() {
-  if (navigatedInApp) history.back();
-  else location.hash = '#/';
+  if (navigatedInApp) return history.back();
+  // App wurde direkt auf einer Unterseite geöffnet: eine Ebene nach oben
+  const ex = location.hash.startsWith('#/uebung/') && getExercise(currentExerciseId);
+  location.hash = ex ? '#/kategorie/' + ex.category : '#/';
 }
 
 
@@ -262,7 +343,7 @@ function showHome() {
   showView('home');
   renderBenchCard();
   renderBodyweightButton();
-  renderExerciseGrid();
+  renderCategoryGrid();
   renderBackupHint();
 }
 
@@ -312,13 +393,57 @@ function renderBodyweightButton() {
   $('bw-button').innerHTML = '<span class="bw-title">⚖️ Körpergewicht</span>' + sub;
 }
 
+/* ---------- Muskelgruppen ---------- */
+
+// Alle Kategorien, "Sonstige" nur wenn dort Übungen liegen
+function allCategories() {
+  const hasOther = data.exercises.some(e => e.category === OTHER_CATEGORY.id);
+  return hasOther ? CATEGORIES.concat(OTHER_CATEGORY) : CATEGORIES;
+}
+
+function getCategory(id) {
+  return allCategories().find(c => c.id === id);
+}
+
+function exercisesIn(categoryId) {
+  return data.exercises.filter(e => e.category === categoryId);
+}
+
+// Letzter Trainingstag einer Muskelgruppe ("2026-11-18" oder null)
+function lastDayInCategory(categoryId) {
+  const ids = new Set(exercisesIn(categoryId).map(e => e.id));
+  const times = data.sets.filter(s => ids.has(s.exId)).map(s => s.time);
+  return times.length ? dayKey(Math.max(...times)) : null;
+}
+
+function renderCategoryGrid() {
+  $('category-grid').innerHTML = allCategories().map(cat => {
+    const count = exercisesIn(cat.id).length;
+    const last = lastDayInCategory(cat.id);
+    return `<a class="ex-btn cat-btn" href="#/kategorie/${cat.id}">
+              <span class="cat-name">${esc(cat.name)}</span>
+              <span class="ex-sub">${count} ${count === 1 ? 'Übung' : 'Übungen'}</span>
+              <span class="ex-sub ${last ? '' : 'faint'}">${last ? 'zuletzt ' + relativeDay(last) : 'noch nicht trainiert'}</span>
+            </a>`;
+  }).join('');
+}
+
+function showCategory(id) {
+  editMode = false;
+  currentCategoryId = id;
+  showView('category');
+  $('cat-title').textContent = getCategory(id).name;
+  renderExerciseGrid();
+}
+
 function renderExerciseGrid() {
   const grid = $('exercise-grid');
+  const exercises = exercisesIn(currentCategoryId);
 
-  if (!data.exercises.length) {
-    grid.innerHTML = '<p class="hint">Noch keine Übungen. Tippe auf „Bearbeiten“, um welche hinzuzufügen.</p>';
+  if (!exercises.length) {
+    grid.innerHTML = '<p class="hint grid-wide">Noch keine Übungen in dieser Gruppe. Tippe auf „Bearbeiten“, um welche hinzuzufügen.</p>';
   } else {
-    grid.innerHTML = data.exercises.map(ex => {
+    grid.innerHTML = exercises.map(ex => {
       if (editMode) {
         return `<button class="ex-btn editing" data-action="delete-exercise" data-id="${esc(ex.id)}">
                   <span class="ex-name">${esc(ex.name)}</span>
@@ -361,12 +486,11 @@ function addExercise(name) {
     return;
   }
   // Wer Bankdrücken gelöscht hat und neu anlegt, bekommt wieder den Fortschrittsbalken
-  const id = (name.toLowerCase() === 'bankdrücken' && !getExercise(BENCH_ID)) ? BENCH_ID : makeId();
-  data.exercises.push({ id, name });
+  const isBench = ['bankdrücken', 'bankdrücken lh'].includes(name.toLowerCase()) && !getExercise(BENCH_ID);
+  data.exercises.push({ id: isBench ? BENCH_ID : makeId(), name, category: currentCategoryId });
   saveData();
   $('new-exercise-name').value = '';
   renderExerciseGrid();
-  renderBenchCard();
   toast('„' + name + '“ hinzugefügt');
 }
 
@@ -382,7 +506,6 @@ function deleteExercise(id) {
   data.sets = data.sets.filter(s => s.exId !== id);
   saveData();
   renderExerciseGrid();
-  renderBenchCard();
 }
 
 
@@ -869,15 +992,16 @@ function exportJson() {
 function exportCsv() {
   const num = n => String(Math.round(n * 100) / 100).replace('.', ',');
   const cell = v => (/[;"\n]/.test(String(v)) ? '"' + String(v).replace(/"/g, '""') + '"' : String(v));
-  const rows = [['Typ', 'Datum', 'Uhrzeit', 'Übung', 'Gewicht (kg)', 'Wiederholungen', 'Geschätztes 1RM (kg)']];
+  const rows = [['Typ', 'Datum', 'Uhrzeit', 'Muskelgruppe', 'Übung', 'Gewicht (kg)', 'Wiederholungen', 'Geschätztes 1RM (kg)']];
 
   data.sets.slice().sort((a, b) => a.time - b.time).forEach(s => {
     const d = new Date(s.time);
     const ex = getExercise(s.exId);
+    const cat = ex && getCategory(ex.category);
     rows.push(['Satz', dayKey(d), pad(d.getHours()) + ':' + pad(d.getMinutes()),
-      ex ? ex.name : '?', num(s.weight), s.reps, num(epley(s.weight, s.reps))]);
+      cat ? cat.name : '', ex ? ex.name : '?', num(s.weight), s.reps, num(epley(s.weight, s.reps))]);
   });
-  sortedBodyweights().forEach(b => rows.push(['Körpergewicht', b.day, '', '', num(b.kg), '', '']));
+  sortedBodyweights().forEach(b => rows.push(['Körpergewicht', b.day, '', '', '', num(b.kg), '', '']));
 
   // ﻿ am Anfang sorgt dafür, dass Excel die Umlaute richtig anzeigt
   const csv = '﻿' + rows.map(r => r.map(cell).join(';')).join('\r\n');
